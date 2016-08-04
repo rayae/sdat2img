@@ -2,13 +2,14 @@
 ====================================
           FILE: sdat2img.c
         AUTHOR: crixec@gmail.com 
-       CREATED: 2015年1月5日
+       CREATED: 2016年8月4日
 ====================================
 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <time.h>
 #define BUFFER_SIZE 1024
 #define BLOCK_SIZE 4096
 #define ERASE_PREFIX "erase "
@@ -97,10 +98,10 @@ void read_transfer(FILE * fp, transfer * trans) {
 }
 void init_output(FILE * fp, int size) {
   fprintf(stdout, "Writing %d empty blocks...\n", size);
-  int i = 0;
-  for (; i < (size * BLOCK_SIZE); i++) {
-    fputc('\0', fp);
-  }
+  int blocks = size * BLOCK_SIZE - 1;
+  fseek(fp, blocks, SEEK_SET);
+  fputc('\0', fp);
+  fseek(fp, 0, SEEK_SET);
   fprintf(stdout, "Write OK !\n");
 }
 int max(int arr[], int len) {
@@ -123,10 +124,12 @@ int main(int argc, char *argv[]) {
   FILE *list;
   FILE *dat;
   FILE *img;
+  time_t startTime;
+  time_t endTime;
+  startTime = time(NULL);
   if (argc < 3) {
     fprintf(stderr,
-            "%s <system.transfer.list> <system.new.dat> <system.ext4.img>\n",
-            argv[0]);
+            "sdat2img <system.transfer.list> <system.new.dat> <system.ext4.img>\n");
     return 1;
   }
   list = fopen(argv[1], "rb");
@@ -201,5 +204,7 @@ int main(int argc, char *argv[]) {
   fclose(dat);
   fclose(img);
   printf("Finished!\n");
+  endTime = time(NULL);
+  fprintf(stdout, "Used Time : %f sec\n", difftime(endTime, startTime));
   return 0;
 }
